@@ -30,16 +30,20 @@ install:
 	-sudo systemctl stop osmosis
 	-sudo service osmosis stop
 	sudo cp build/cpp/osmosis.bin /usr/bin/osmosis
-	if grep -i ubuntu /etc/os-release >/dev/null 2>/dev/null; then make install_service_upstart; else make install_service_systemd; fi
+	make install_service
 
-install_service_systemd:
-	sudo cp osmosis.service /usr/lib/systemd/system/osmosis.service
+SYSTEMD_SERVICE_DIR_RHEL_FORM=/usr/lib/systemd/system
+SYSTEMD_SERVICE_DIR_UBUNTU_FORM=/lib/systemd/system
+SYSTEMD_SERVICE_FILES_DIR = $(shell \
+if [ -e ${SYSTEMD_SERVICE_DIR_RHEL_FORM} ]; then \
+	echo ${SYSTEMD_SERVICE_DIR_RHEL_FORM}; \
+else \
+	echo ${SYSTEMD_SERVICE_DIR_UBUNTU_FORM}; \
+fi)
+install_service:
+	sudo cp osmosis.service ${SYSTEMD_SERVICE_FILES_DIR}
 	sudo systemctl enable osmosis.service
 	if ["$(DONT_START_SERVICE)" == ""]; then sudo systemctl start osmosis; fi
-
-install_service_upstart:
-	sudo cp upstart_osmosis.conf /etc/init/osmosis.conf
-	if ["$(DONT_START_SERVICE)" == ""]; then sudo service osmosis start; fi
 
 uninstall:
 	-sudo systemctl stop osmosis
